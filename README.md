@@ -42,32 +42,6 @@ Integrated NLP chatbot
 
 Web-based interface
 
-⚙️ Installation
-# Clone the repository
-git clone https://github.com/your-username/NeuroScan-AI.git
-cd NeuroScan-AI
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate    # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-▶️ Usage
-# Run the application
-streamlit run app.py
-
-
-Upload an MRI brain scan
-
-View the model’s real-time tumor prediction
-
-Check probability scores and output visuals
-
-Download the diagnosis report
-
-Ask the integrated AI chatbot neuroscience-related questions
 
 🔍 How It Works
 1. Dataset & Preprocessing
@@ -144,24 +118,6 @@ Explore clinical validation with hospitals
 
 Deploy as a scalable cloud-based medical assistant
 
-📁 Project Structure
-NeuroScan-AI/
-│── app.py                 # Streamlit frontend
-│── model/                 # Saved CNN model
-│── preprocessing/         # Image preprocessing scripts
-│── chatbot/               # Neuroscience chatbot logic
-│── reports/               # PDF report templates
-│── utils/                 # Helper functions
-│── requirements.txt
-│── README.md
+So Yeah this was all about NeuroScan AI 
 
-👨‍💻 Contributors
-
-Your Name — Machine Learning Engineer / Developer
-
-(Add team members if needed)
-
-📄 License
-
-This project is licensed under the MIT License.
-You may use, modify, and distribute it with proper attribution.
+Ajay Mudliyar — AIML Developer🤙🏻🤙🏻
