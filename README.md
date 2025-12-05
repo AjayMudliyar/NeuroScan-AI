@@ -1,6 +1,5 @@
 
-🧠 NeuroScan AI
-AI-Powered Brain Tumor Detection from MRI Scans
+## 🧠 NeuroScan AI :- AI-Powered Brain Tumor Detection for Radiologists
 
 NeuroScan AI is an advanced medical imaging assistant designed to help radiologists detect brain tumors faster and more accurately. Built with deep learning and an intuitive interface, it empowers healthcare professionals with instant tumor predictions, visual insights, and downloadable diagnosis reports.
 
@@ -11,7 +10,7 @@ Early detection of brain tumors is critical, yet manual interpretation of MRI sc
 
 This project was inspired by the vision of combining medical imaging with artificial intelligence to improve patient outcomes and reduce diagnostic uncertainties.
 
-⭐ Features
+## ⭐ Features
 
 ⚡ Instant Tumor Detection: AI model predicts tumor presence in 2–3 seconds
 
@@ -25,7 +24,7 @@ This project was inspired by the vision of combining medical imaging with artifi
 
 🌐 Clean & Interactive UI: Built with Streamlit for a smooth experience
 
-🛠 Tech Stack
+## 🛠 Tech Stack
 Machine Learning
 
 Convolutional Neural Network (CNN)
@@ -38,13 +37,13 @@ Frontend & Deployment
 
 Streamlit
 
-Integrated NLP chatbot
+NeuroBot :- NeuroScience chatbot
 
 Web-based interface
 
 
-🔍 How It Works
-1. Dataset & Preprocessing
+## 🔍 How It Works
+<h2>1. Dataset & Preprocessing<h2>
 
 Labeled MRI images curated from reliable datasets
 
@@ -52,7 +51,7 @@ Normalized, resized, noise-reduced
 
 Data augmentation to handle limited sample size
 
-2. CNN Model Training
+<h2>2. CNN Model Training<h2>
 
 Custom CNN trained specifically for brain MRI tumor classification
 
@@ -60,7 +59,7 @@ Balanced for both speed and accuracy
 
 Tuned to minimize false positives & false negatives
 
-3. Prediction Pipeline
+<h2>3. Prediction Pipeline<h2>
 
 User uploads MRI
 
@@ -68,11 +67,11 @@ Model analyzes and outputs tumor probability
 
 Detection report generated instantly
 
-4. Diagnostic Report Generator
+<h2>4. Diagnostic Report Generator<h2>
 
 Exports findings in downloadable PDF format
 
-⚓ Challenges
+## ⚓ Challenges
 
 Limited MRI samples required augmentation and careful preprocessing
 
@@ -84,7 +83,7 @@ Ensuring seamless integration between ML backend and Streamlit UI
 
 Debugging performance bottlenecks during deployment
 
-🏆 Accomplishments
+## 🏆 Accomplishments
 
 Built a high-accuracy, real-time tumor detection model
 
@@ -96,7 +95,7 @@ Successfully integrated an AI-powered neuroscience chatbot
 
 Created a complete end-to-end medical AI tool
 
-📚 What We Learned
+## 📚 What We Learned
 
 Deep working knowledge of CNNs & image preprocessing
 
@@ -106,7 +105,7 @@ How to design a user-friendly medical diagnostic interface
 
 Handling practical challenges of AI in healthcare
 
-🔮 Next Steps for NeuroScan AI
+## 🔮 Next Steps for NeuroScan AI
 
 Expand training dataset with more diverse MRI variations
 
@@ -120,4 +119,4 @@ Deploy as a scalable cloud-based medical assistant
 
 So Yeah this was all about NeuroScan AI 
 
-Ajay Mudliyar — AIML Developer🤙🏻🤙🏻
+## Ajay Mudliyar — AIML Developer🤙🏻🤙🏻
