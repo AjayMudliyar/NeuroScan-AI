@@ -4,33 +4,6 @@ AI-Powered Brain Tumor Detection from MRI Scans
 
 NeuroScan AI is an advanced medical imaging assistant designed to help radiologists detect brain tumors faster and more accurately. Built with deep learning and an intuitive interface, it empowers healthcare professionals with instant tumor predictions, visual insights, and downloadable diagnosis reports.
 
-📌 Table of Contents
-
-Introduction
-
-Features
-
-Tech Stack
-
-Installation
-
-Usage
-
-How It Works
-
-Challenges
-
-Accomplishments
-
-What We Learned
-
-Next Steps
-
-Project Structure
-
-Contributors
-
-License
 
 🚀 Introduction
 
