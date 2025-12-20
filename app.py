@@ -8,6 +8,13 @@ from streamlit_lottie import st_lottie
 import requests
 import plotly.graph_objects as go
 from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle
+from reportlab.lib import colors
+from io import BytesIO
+
 
 # --- Page config (must be before any UI) ---
 st.set_page_config(
@@ -528,7 +535,7 @@ st.sidebar.title("🧠 NeuroScan AI")
 st.sidebar.markdown("### An AI-Powered Brain Tumor Detector for Radiologists")
 
 # Show current patient info in sidebar
-with st.sidebar.expander("👤 Current Patient", expanded=True):
+with st.sidebar.expander("👤 Patient Name:", expanded=True):
     st.markdown(f"**Name:** {st.session_state.patient_data['name']}")
     st.markdown(f"**ID:** {st.session_state.patient_data['id']}")
     st.markdown(f"**Age:** {st.session_state.patient_data['age']} years")
@@ -595,8 +602,45 @@ with col1:
 </style>
 """, unsafe_allow_html=True)
 
-    st.markdown(f"**Current Patient:** {st.session_state.patient_data['name']} (ID: {st.session_state.patient_data['id']})")
-    st.write("Upload an **MRI Scan** and let AI assist in detecting possible tumors with modern deep learning models.")
+            # With this BIGGER version:
+st.markdown(f"""
+            <div style='
+                font-size: 28px; 
+                font-weight: 800; 
+                color: #ffffff; 
+                text-shadow: 0 4px 12px rgba(124,58,237,0.4); 
+                margin: 20px 0; 
+                padding: 12px 20px; 
+                background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(6,182,212,0.15)); 
+                border-radius: 16px; 
+                border: 2px solid rgba(255,255,255,0.2);
+                text-align: center;
+            '>
+                👤 Patient Name:- {st.session_state.patient_data['name']} 
+                <span style='color: #7c3aed; font-size: 24px;'>, ID: {st.session_state.patient_data['id']}</span>
+            </div>
+    """, unsafe_allow_html=True)
+
+st.markdown(f"""
+<div style='
+    font-size: 22px; 
+    font-weight: 700; 
+    color: #e6eef8; 
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5); 
+    margin: 16px 0; 
+    padding: 16px 24px; 
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); 
+    border-radius: 20px; 
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    line-height: 1.6;
+'>
+    📤 <strong>Upload an MRI Scan</strong> and let <span style='color: #7c3aed; font-weight: 800;'>AI assist</span> 
+    in detecting possible tumors with <span style='color: #06b6d4; font-weight: 800;'>modern deep learning models</span>
+</div>
+""", unsafe_allow_html=True)
+
 with col2:
     if lottie_brain:
         st_lottie(lottie_brain, height=160, key="brain")
@@ -604,43 +648,158 @@ with col2:
 st.markdown("---")
 
 # --- UPDATED: Generate report function with patient data ---
-def generate_report(prediction_probs, class_names, patient_data):
+def generate_pdf_report(prediction_probs, class_names, patient_data, mri_image):
+    """Generate PDF report with patient data & MRI image"""
     predicted_class = int(np.argmax(prediction_probs))
     confidence = float(prediction_probs[predicted_class] * 100)
 
-    if predicted_class == 2:  # Unsupported
-        return "Image is not a valid MRI scan. Please upload a proper MRI scan for analysis."
+    if predicted_class == 2:
+        return None
 
-    report = "NeuroScan AI Brain Tumor Detection Report\n"
-    report += "============================================\n\n"
-    report += "PATIENT INFORMATION:\n"
-    report += f"Name: {patient_data['name']}\n"
-    report += f"ID: {patient_data['id']}\n"
-    report += f"Age: {patient_data['age']} years\n"
-    report += f"Gender: {patient_data['gender']}\n"
-    report += f"Email: {patient_data['email']}\n\n"
-    report += "ANALYSIS RESULTS:\n"
-    report += "---------------------------------------\n"
-    report += f"Prediction: {class_names[predicted_class]}\n"
-    report += f"Confidence: {confidence:.2f}%\n\n"
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    styles = getSampleStyleSheet()
     
-    if predicted_class == 1:  # Tumor detected
-        report += (
-            "FINDINGS: \n"
-            "The AI model detected a brain tumor in the provided MRI scan with a high confidence level.\n"
-            "It is highly recommended to consult a qualified radiologist or neurologist for further evaluation.\n"
-            "This report serves as a support tool and does not replace professional medical diagnosis.\n"
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#1a1a1a'),
+        spaceAfter=12,
+        alignment=1,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceAfter=10,
+        spaceBefore=10,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#34495e'),
+        spaceAfter=6,
+        leading=14
+    )
+    
+    # TITLE
+    elements.append(Paragraph("NeuroScan AI Brain Tumor Detection Report", title_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # PATIENT INFORMATION TABLE
+    elements.append(Paragraph("Patient Information", heading_style))
+    patient_table_data = [
+        ['Patient Name', patient_data['name']],
+        ['Patient ID', patient_data['id']],
+        ['Age', f"{patient_data['age']} years"],
+        ['Gender', patient_data['gender']],
+        ['Email', patient_data['email']],
+        ['Report Generated', datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    ]
+    
+    patient_table = Table(patient_table_data, colWidths=[2*inch, 3.5*inch])
+    patient_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#ecf0f1')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    
+    elements.append(patient_table)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # ANALYSIS RESULTS
+    elements.append(Paragraph("Analysis Results", heading_style))
+    result_table_data = [
+        ['Prediction', class_names[predicted_class]],
+        ['Confidence Level', f"{confidence:.2f}%"],
+        ['Model Type', 'Convolutional Neural Network (CNN)']
+    ]
+    
+    result_table = Table(result_table_data, colWidths=[2*inch, 3.5*inch])
+    result_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#ecf0f1')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')])
+    ]))
+    
+    elements.append(result_table)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # FINDINGS
+    elements.append(Paragraph("Clinical Findings", heading_style))
+    if predicted_class == 1:
+        findings_text = (
+            "<b>⚠️ FINDING: Tumor Detected</b><br/><br/>"
+            "The AI model detected a brain tumor in the provided MRI scan with a confidence level of "
+            f"{confidence:.2f}%.<br/><br/>"
+            "<b>RECOMMENDATIONS:</b><br/>"
+            "• It is highly recommended to consult a qualified radiologist or neurologist for further evaluation.<br/>"
+            "• Additional imaging studies may be required (CT, MR Spectroscopy, etc.).<br/>"
+            "• Consider referring for specialist neurosurgical consultation if appropriate.<br/><br/>"
+            "<b>DISCLAIMER:</b> This report serves as a decision-support tool and does not replace professional "
+            "medical diagnosis. The final diagnosis must be made by a qualified healthcare professional."
         )
     else:
-        report += "FINDINGS: \n"
-        report += "No brain tumor was detected in the MRI scan based on current AI model analysis.\n"
+        findings_text = (
+            "<b>✅ FINDING: No Tumor Detected</b><br/><br/>"
+            "Based on the AI model analysis with a confidence level of {:.2f}%, no brain tumor was detected "
+            "in the provided MRI scan.<br/><br/>"
+            "<b>RECOMMENDATIONS:</b><br/>"
+            "• Continue with routine monitoring as per clinical protocol.<br/>"
+            "• Follow up imaging as clinically indicated.<br/><br/>"
+            "<b>DISCLAIMER:</b> This report serves as a decision-support tool and does not replace professional "
+            "medical diagnosis. The final diagnosis must be made by a qualified healthcare professional."
+        ).format(confidence)
+    
+    elements.append(Paragraph(findings_text, normal_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # MRI IMAGE
+    elements.append(Paragraph("MRI Scan Image", heading_style))
+    img_buffer = BytesIO()
+    mri_image.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    img = RLImage(img_buffer, width=4.5*inch, height=4.5*inch)
+    elements.append(img)
+    elements.append(Spacer(1, 0.2*inch))
+    
+    # TECHNICAL INFO
+    elements.append(Paragraph("Technical Information", heading_style))
+    tech_info = (
+        "<b>Analysis Confidence Breakdown:</b><br/>"
+        f"• No Tumor Probability: {float(prediction_probs[0])*100:.2f}%<br/>"
+        f"• Tumor Probability: {float(prediction_probs[1])*100:.2f}%<br/>"
+        f"• Unsupported Probability: {float(prediction_probs[2])*100:.2f}%<br/><br/>"
+    ).format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
+    elements.append(Paragraph(tech_info, normal_style))
+    
+    doc.build(elements)
+    pdf_buffer.seek(0)
+    return pdf_buffer
 
-    report += f"\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    report += "\nThank you for using NeuroScan AI.\n"
-    report += "============================================\n"
 
-    return report
-
+# --- File Upload and Prediction ---
 # --- File Upload and Prediction ---
 uploaded_file = st.file_uploader("📤 Upload MRI Scan (jpg, jpeg, png)", type=["jpg","jpeg","png"])
 
@@ -656,7 +815,6 @@ if uploaded_file is not None:
 
     with col_right:
         try:
-            # Preprocess
             img = np.array(image)
             img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
             img = img.reshape(1, IMG_SIZE, IMG_SIZE, 1) / 255.0
@@ -664,7 +822,6 @@ if uploaded_file is not None:
             with st.spinner("🔍 Analyzing image..."):
                 pred = model.predict(img)[0]
 
-            # 3 classes: no tumor, tumor, unsupported
             no_tumor_prob = float(pred[0])
             tumor_prob = float(pred[1])
             unsupported_prob = float(pred[2])
@@ -690,57 +847,60 @@ if uploaded_file is not None:
             else:
                 st.markdown('<div class="result-box" style="background:gray; color:white;">⚠️ Image not supported. Please upload a valid MRI scan.</div>', unsafe_allow_html=True)
 
-            # Generate report with patient data
+            # Generate PDF report with patient data and MRI image
             class_names = ['No Tumor', 'Tumor', 'Unsupported Image']
-            report = generate_report(pred, class_names, st.session_state.patient_data)
-
-            st.markdown(
-            """
-            <style>
-            /* Make all Streamlit download buttons larger and bolder */
-            div[data-testid="stDownloadButton"] > button {
-                height: 86px !important;
-                padding: 18px 28px !important;
-                background: linear-gradient(90deg, #ff416c, #ff4b2b) !important;
-                color: white !important;
-                font-weight: 900 !important;
-                font-size: 100px !important;
-                border-radius: 14px !important;
-                width: 630px;
-                box-shadow: 0 10px 30px rgba(255,65,108,0.35) !important;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1.0 !important;
-            }
-            div[data-testid="stDownloadButton"] > button:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 16px 40px rgba(255,65,108,0.45) !important;
-            }
-            /* The inner span contains the label text — enlarge it too */
-            div[data-testid="stDownloadButton"] > button span {
-                font-size: 50px;
-                letter-spacing: 0.6px !important;
-                font-weight: 900 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-            )
             
-            # Dynamic filename with patient info
-            safe_name = st.session_state.patient_data['name'].replace(' ', '_').replace('/', '_')
-            st.download_button(
-                label="📥 Download Diagnostic Report (Click to Save)",
-                data=report,
-                file_name=f"neuroscan_report_{st.session_state.patient_data['id']}_{safe_name}.txt",
-                mime="text/plain",
-            )
+            if predicted_class != 2:
+                pdf_report = generate_pdf_report(pred, class_names, st.session_state.patient_data, image)
+                
+                st.markdown(
+                """
+                <style>
+                div[data-testid="stDownloadButton"] > button {
+                    height: 86px !important;
+                    padding: 18px 28px !important;
+                    background: linear-gradient(90deg, #ff416c, #ff4b2b) !important;
+                    color: white !important;
+                    font-weight: 900 !important;
+                    font-size: 100px !important;
+                    border-radius: 14px !important;
+                    width: 630px;
+                    box-shadow: 0 10px 30px rgba(255,65,108,0.35) !important;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    line-height: 1.0 !important;
+                }
+                div[data-testid="stDownloadButton"] > button:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 16px 40px rgba(255,65,108,0.45) !important;
+                }
+                div[data-testid="stDownloadButton"] > button span {
+                    font-size: 50px;
+                    letter-spacing: 0.6px !important;
+                    font-weight: 900 !important;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+                )
+                
+                # Dynamic filename with patient info
+                safe_name = st.session_state.patient_data['name'].replace(' ', '_').replace('/', '_')
+                st.download_button(
+                    label="📥 Download Diagnostic Report (PDF)",
+                    data=pdf_report,
+                    file_name=f"neuroscan_report_{st.session_state.patient_data['id']}_{safe_name}.pdf",
+                    mime="application/pdf",
+                )
+            else:
+                st.warning("⚠️ Cannot generate report for unsupported image format.")
 
         except Exception as e:
             st.error(f"❌ Error processing image: {e}")
 else:
     st.info("📌 Please upload an MRI scan image to start the prediction.")
+
 
 st.markdown("---")
 
