@@ -7,6 +7,7 @@ from PIL import Image
 from streamlit_lottie import st_lottie
 import requests
 import plotly.graph_objects as go
+from datetime import datetime
 
 # --- Page config (must be before any UI) ---
 st.set_page_config(
@@ -41,28 +42,26 @@ if "chat_messages" not in st.session_state:
         }
     ]
 
-
+if "patient_info_filled" not in st.session_state:
+    st.session_state.patient_info_filled = False
+    st.session_state.patient_data = {}
 
 def login_ui():
     """
     Compact, sleek login UI - removes the large top spacing so the small top header and
     the login card sit closer together (as requested).
-
-    Replace your existing login_ui() with this function.
-    I've marked the key changes with comments starting with "CHANGE:" so you can find them quickly.
     """
     st.markdown(
         """
         <style>
         /* ------------------------------
            TOP BAR (compact)
-           CHANGE: reduced padding so header occupies less vertical space
            ------------------------------ */
         .ns-topbar {
             display:flex;
             align-items:center;
             gap:12px;
-            padding:8px 12px;                            /* CHANGE: was 12px 20px -> smaller */
+            padding:8px 12px;
             width:100%;
             box-sizing:border-box;
             background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
@@ -72,7 +71,7 @@ def login_ui():
             z-index: 999;
         }
         .ns-logo {
-            width:40px;                                  /* CHANGE: smaller logo */
+            width:40px;
             height:40px;
             border-radius:8px;
             background: linear-gradient(135deg,#7c3aed,#06b6d4);
@@ -87,39 +86,37 @@ def login_ui():
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
             color: #e6eef8;
             font-weight: 800;
-            font-size: 16px;                              /* CHANGE: slightly smaller */
+            font-size: 16px;
             margin: 0;
             line-height:1;
         }
         .ns-sub {
             color:#9fb3dd;
-            font-size:11px;                               /* CHANGE: slightly smaller */
+            font-size:11px;
             margin:0;
             opacity:0.95;
         }
 
         /* ------------------------------
            PAGE container
-           CHANGE: removed large min-height and reduced padding to remove extra blank space
            ------------------------------ */
         .ns-page {
             background: linear-gradient(180deg,#071226 0%, #0c1b2b 100%);
-            min-height: auto;                             /* CHANGE: was calc(100vh - 64px) */
-            padding: 10px 12px;                           /* CHANGE: was 36px 16px -> smaller */
+            min-height: auto;
+            padding: 10px 12px;
             box-sizing: border-box;
         }
 
         /* ------------------------------
            Centered card
-           CHANGE: reduced top margin so the card sits close under the header
            ------------------------------ */
         .ns-card {
             width:420px;
             max-width:96%;
-            margin: 10px auto;                            /* CHANGE: was 26px auto -> smaller */
+            margin: 10px auto;
             background: rgba(255,255,255,0.025);
-            border-radius: 12px;                          /* slightly tighter radius */
-            padding: 20px;                                /* CHANGE: reduced padding */
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 10px 28px rgba(2,6,23,0.55);
             border: 1px solid rgba(255,255,255,0.025);
             color: #e6eef8;
@@ -127,7 +124,7 @@ def login_ui():
         }
 
         .ns-heading {
-            font-size:18px;                               /* smaller heading to fit compact layout */
+            font-size:18px;
             font-weight:800;
             margin: 0 0 6px 0;
             color: #ffffff;
@@ -135,7 +132,7 @@ def login_ui():
         .ns-lead {
             font-size:13px;
             color:#9fb3dd;
-            margin:0 0 12px 0;                            /* slightly less spacing */
+            margin:0 0 12px 0;
         }
 
         /* Labels */
@@ -144,13 +141,13 @@ def login_ui():
             color:#d8e3f0 !important;
             font-weight:700 !important;
             font-size:13px !important;
-            margin-bottom:6px;                            /* tighter spacing */
+            margin-bottom:6px;
         }
 
         /* Inputs: sleek with subtle inner shadow and focused gradient border */
         .ns-input input {
             width:100% !important;
-            padding:10px 12px !important;                /* smaller padding */
+            padding:10px 12px !important;
             font-size:14px !important;
             background: rgba(255,255,255,0.02) !important;
             color: #e8f0ff !important;
@@ -171,7 +168,7 @@ def login_ui():
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            padding:10px 12px;                            /* smaller */
+            padding:10px 12px;
             border-radius:10px;
             background: linear-gradient(90deg, #7c3aed, #06b6d4);
             color:#fff;
@@ -225,11 +222,10 @@ def login_ui():
         unsafe_allow_html=True,
     )
 
-    # compact form for grouped inputs + enter-key submit
     with st.form("login_form_compact", clear_on_submit=False):
         # Username
         st.markdown('<label class="ns-label" for="username">Username</label>', unsafe_allow_html=True)
-        username = st.text_input("", key="username", placeholder="radiologist", label_visibility="collapsed")
+        username = st.text_input("", key="username", placeholder="AjayMudliyar", label_visibility="collapsed")
 
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
@@ -241,10 +237,71 @@ def login_ui():
         remember = st.checkbox("Remember me", value=False, key="remember_me")
         st.markdown('<div class="ns-row"><div></div><div><a href="#" style="color:#9fb3dd;text-decoration:none;font-weight:700;">Forgot?</a></div></div>', unsafe_allow_html=True)
 
+        # CLASSIC Sign In Button
+        st.markdown("""
+        <style>
+        /* Classic Sleek Sign In Button */
+        div[data-testid="stFormSubmitButton"] button {
+            width: 100% !important;
+            height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 10px !important;
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 16px !important;
+            border: 2px solid rgba(255,255,255,0.1) !important;
+            cursor: pointer !important;
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.15),
+                0 2px 4px rgba(0,0,0,0.1) !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            letter-spacing: 0.5px !important;
+            text-transform: uppercase !important;
+            position: relative !important;
+            overflow: hidden !important;
+            margin-top: 8px !important;
+        }
+        
+        div[data-testid="stFormSubmitButton"] button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        div[data-testid="stFormSubmitButton"] button:hover {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.25),
+                0 4px 8px rgba(0,0,0,0.15) !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        
+        div[data-testid="stFormSubmitButton"] button:hover::before {
+            left: 100%;
+        }
+        
+        div[data-testid="stFormSubmitButton"] button:active {
+            transform: translateY(0) !important;
+            box-shadow: 
+                0 2px 8px rgba(0,0,0,0.2),
+                0 1px 2px rgba(0,0,0,0.1) !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         submitted = st.form_submit_button("Sign In")
 
         # compact demo note (non-intrusive)
-        st.markdown('<div class="ns-small">Use <strong>radiologist</strong> / <strong>secure123</strong> for demo access</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ns-small">Use <strong>AjayMudliyar</strong> / <strong>Neuro@123</strong> for demo access</div>', unsafe_allow_html=True)
 
         if submitted:
             # basic validation
@@ -254,7 +311,7 @@ def login_ui():
                 return False
 
             # simple auth check
-            if username == "radiologist" and password == "secure123":
+            if username == "AjayMudliyar" and password == "Neuro@123":
                 st.session_state.logged_in = True
                 st.success("✅ Login successful — redirecting...")
                 st.markdown("</div></div>", unsafe_allow_html=True)
@@ -268,13 +325,67 @@ def login_ui():
     st.markdown("</div></div>", unsafe_allow_html=True)
     return False
 
+
 # --- Show login UI and stop if not authenticated ---
 if not st.session_state.logged_in:
     logged_in_now = login_ui()
     if not logged_in_now:
         st.stop()
 
-# --- User is authenticated; main app continues below ---
+# --- Patient Information Collection ---
+# Show patient info form if not filled OR if "New Patient" clicked
+if not st.session_state.patient_info_filled:
+    st.markdown("---")
+    
+    # Patient info header
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.markdown("""
+        <h2 style='color: #ffffff; font-size: 28px; margin-bottom: 10px;'>
+        👤 Patient Information
+        </h2>
+        <p style='color: #9fb3dd; font-size: 16px;'>
+        Please enter patient details before uploading MRI scan
+        </p>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div style="height: 100px"></div>', unsafe_allow_html=True)
+    
+    # Patient info form
+    with st.form("patient_info_form", clear_on_submit=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            patient_name = st.text_input("👤 Patient Name", placeholder="John Doe", key="patient_name")
+            patient_age = st.number_input("🎂 Age", min_value=0, max_value=120, value=30, key="patient_age")
+            patient_gender = st.selectbox("⚥ Gender", ["Male", "Female", "Other"], key="patient_gender")
+        
+        with col2:
+            patient_id = st.text_input("🆔 Patient ID", placeholder="PT-12345", key="patient_id")
+            patient_email = st.text_input("📧 Email (optional)", placeholder="patient@example.com", key="patient_email")
+        
+        submitted_patient = st.form_submit_button("✅ Save Patient Info & Continue", use_container_width=True)
+        
+        if submitted_patient:
+            if not patient_name.strip() or not patient_id.strip():
+                st.error("❌ Please fill Patient Name and Patient ID (required fields).")
+            else:
+                st.session_state.patient_data = {
+                    "name": patient_name.strip(),
+                    "id": patient_id.strip(),
+                    "age": patient_age,
+                    "gender": patient_gender,
+                    "email": patient_email.strip() if patient_email else "Not provided"
+                }
+                st.session_state.patient_info_filled = True
+                st.success("✅ Patient information saved!")
+                st.rerun()
+    
+    st.markdown("---")
+    st.stop()
+
+# --- User is authenticated & patient info filled; main app continues below ---
 
 # --- Model loading (cached) ---
 @st.cache_resource
@@ -290,23 +401,18 @@ except Exception as e:
     st.stop()
 
 # --- OpenRouter API config for Neuro Chatbot ---
-# Safely attempt to read from st.secrets, but fall back to environment variables if no secrets file exists.
 OPENROUTER_API_KEY = None
 
-# Import the specific Streamlit exception class if available; fallback to a broad Exception if not.
 try:
     from streamlit.errors import StreamlitSecretNotFoundError
 except Exception:
     StreamlitSecretNotFoundError = Exception
 
 try:
-    # Try to get the key from st.secrets (this may raise StreamlitSecretNotFoundError if no secrets file exists)
     OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
 except (StreamlitSecretNotFoundError, KeyError):
-    # Either no secrets file or key missing -> fallback to environment variable
     OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", None)
 except Exception:
-    # Any other unexpected error -> fallback to environment variable as a safety net
     OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", None)
 
 if not OPENROUTER_API_KEY:
@@ -421,25 +527,39 @@ div[data-testid="stDownloadButton"] button span {
 st.sidebar.title("🧠 NeuroScan AI")
 st.sidebar.markdown("### An AI-Powered Brain Tumor Detector for Radiologists")
 
-with st.sidebar.expander("📌 About NeuroScan AI", expanded=True):
+# Show current patient info in sidebar
+with st.sidebar.expander("👤 Current Patient", expanded=True):
+    st.markdown(f"**Name:** {st.session_state.patient_data['name']}")
+    st.markdown(f"**ID:** {st.session_state.patient_data['id']}")
+    st.markdown(f"**Age:** {st.session_state.patient_data['age']} years")
+    st.markdown(f"**Gender:** {st.session_state.patient_data['gender']}")
+    st.markdown(f"**Email:** {st.session_state.patient_data['email']}")
+    
+    if st.button("🔄 New Patient", key="new_patient"):
+        st.session_state.patient_info_filled = False
+        st.session_state.patient_data = {}
+        st.rerun()
+
+with st.sidebar.expander("📌 About NeuroScan AI", expanded=False):
     st.markdown("""
-    **NeuroScan AI** is an AI-powered tool designed to assist radiologists in the early detection of brain tumors using MRI scans.  
+    **NeuroScan AI** is an AI-powered tool designed to assist radiologists in the early detection of brain tumors using MRI scans. 
 
-    🔹 **Problem:** Brain tumors are life-threatening and manual diagnosis is time-consuming & prone to errors.  
+    🔹 **Problem:** Brain tumors are life-threatening and manual diagnosis is time-consuming & prone to errors. 
 
-    🔹 **Solution:** Our deep learning model analyzes MRI scans and detects the presence of tumors in **2–3 seconds Which Overcomes the problem with Manual process.**.  
+    🔹 **Solution:** Our deep learning model analyzes MRI scans and detects the presence of tumors in **2–3 seconds Which Overcomes the problem with Manual process.**. 
 
     🔹 **How it works:**  
-    1. Upload MRI scan.
-    2. AI model processes the scan.
-    3. Result displayed with confidence score.
-    4. Download the Diagnosis Report with one click.
-    5. Chat with NeuroBot for collecting information regarding Neuro Related queries.
+    1. Enter patient information
+    2. Upload MRI scan.
+    3. AI model processes the scan.
+    4. Result displayed with confidence score.
+    5. Download the Diagnosis Report with one click.
+    6. Chat with NeuroBot for collecting information regarding Neuro Related queries.
 
     🔹 **Why it matters:**  
     - Faster & more reliable screening  
     - Reduces workload for radiologists  
-    - Acts as a **decision-support tool** (not a replacement for doctors)  
+    - Acts as a **decision-support tool** (not a replacement for doctors) 
 
     🚀 *Our vision is to enhance clinical workflows, ensure faster diagnoses, and help save lives.*
     """)
@@ -475,12 +595,51 @@ with col1:
 </style>
 """, unsafe_allow_html=True)
 
+    st.markdown(f"**Current Patient:** {st.session_state.patient_data['name']} (ID: {st.session_state.patient_data['id']})")
     st.write("Upload an **MRI Scan** and let AI assist in detecting possible tumors with modern deep learning models.")
 with col2:
     if lottie_brain:
         st_lottie(lottie_brain, height=160, key="brain")
 
 st.markdown("---")
+
+# --- UPDATED: Generate report function with patient data ---
+def generate_report(prediction_probs, class_names, patient_data):
+    predicted_class = int(np.argmax(prediction_probs))
+    confidence = float(prediction_probs[predicted_class] * 100)
+
+    if predicted_class == 2:  # Unsupported
+        return "Image is not a valid MRI scan. Please upload a proper MRI scan for analysis."
+
+    report = "NeuroScan AI Brain Tumor Detection Report\n"
+    report += "============================================\n\n"
+    report += "PATIENT INFORMATION:\n"
+    report += f"Name: {patient_data['name']}\n"
+    report += f"ID: {patient_data['id']}\n"
+    report += f"Age: {patient_data['age']} years\n"
+    report += f"Gender: {patient_data['gender']}\n"
+    report += f"Email: {patient_data['email']}\n\n"
+    report += "ANALYSIS RESULTS:\n"
+    report += "---------------------------------------\n"
+    report += f"Prediction: {class_names[predicted_class]}\n"
+    report += f"Confidence: {confidence:.2f}%\n\n"
+    
+    if predicted_class == 1:  # Tumor detected
+        report += (
+            "FINDINGS: \n"
+            "The AI model detected a brain tumor in the provided MRI scan with a high confidence level.\n"
+            "It is highly recommended to consult a qualified radiologist or neurologist for further evaluation.\n"
+            "This report serves as a support tool and does not replace professional medical diagnosis.\n"
+        )
+    else:
+        report += "FINDINGS: \n"
+        report += "No brain tumor was detected in the MRI scan based on current AI model analysis.\n"
+
+    report += f"\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    report += "\nThank you for using NeuroScan AI.\n"
+    report += "============================================\n"
+
+    return report
 
 # --- File Upload and Prediction ---
 uploaded_file = st.file_uploader("📤 Upload MRI Scan (jpg, jpeg, png)", type=["jpg","jpeg","png"])
@@ -531,35 +690,9 @@ if uploaded_file is not None:
             else:
                 st.markdown('<div class="result-box" style="background:gray; color:white;">⚠️ Image not supported. Please upload a valid MRI scan.</div>', unsafe_allow_html=True)
 
-            # Generate report text
-            def generate_report(prediction_probs, class_names):
-                predicted_class = int(np.argmax(prediction_probs))
-                confidence = float(prediction_probs[predicted_class] * 100)
-
-                if predicted_class == 2:  # Unsupported
-                    return "Image is not a valid MRI scan. Please upload a proper MRI scan for analysis."
-
-                report = "NeuroScan AI Brain Tumor Detection Report\n"
-                report += "---------------------------------------\n"
-                report += f"Prediction: {class_names[predicted_class]}\n"
-                report += f"Confidence: {confidence:.2f}%\n\n"
-                if predicted_class == 1:  # Tumor detected
-                    report += (
-                        "Findings: \n"
-                        "The AI model detected a brain tumor in the provided MRI scan with a high confidence level.\n"
-                        "It is highly recommended to consult a qualified radiologist or neurologist for further evaluation.\n"
-                        "This report serves as a support tool and does not replace professional medical diagnosis.\n"
-                    )
-                else:
-                    report += "Findings: \n"
-                    report += "No brain tumor was detected in the MRI scan based on current AI model analysis.\n"
-
-                report += "\nThank you for using NeuroScan AI."
-
-                return report
-
+            # Generate report with patient data
             class_names = ['No Tumor', 'Tumor', 'Unsupported Image']
-            report = generate_report(pred, class_names)
+            report = generate_report(pred, class_names, st.session_state.patient_data)
 
             st.markdown(
             """
@@ -571,7 +704,7 @@ if uploaded_file is not None:
                 background: linear-gradient(90deg, #ff416c, #ff4b2b) !important;
                 color: white !important;
                 font-weight: 900 !important;
-                font-size: 100px !important;      /* larger label text */
+                font-size: 100px !important;
                 border-radius: 14px !important;
                 width: 630px;
                 box-shadow: 0 10px 30px rgba(255,65,108,0.35) !important;
@@ -589,21 +722,20 @@ if uploaded_file is not None:
                 font-size: 50px;
                 letter-spacing: 0.6px !important;
                 font-weight: 900 !important;
-                
             }
             </style>
             """,
             unsafe_allow_html=True,
-        )
-        
-        # Use the normal st.download_button call (it will inherit the CSS above)
+            )
+            
+            # Dynamic filename with patient info
+            safe_name = st.session_state.patient_data['name'].replace(' ', '_').replace('/', '_')
             st.download_button(
                 label="📥 Download Diagnostic Report (Click to Save)",
                 data=report,
-                file_name="neuroscan_report.txt",
+                file_name=f"neuroscan_report_{st.session_state.patient_data['id']}_{safe_name}.txt",
                 mime="text/plain",
             )
-
 
         except Exception as e:
             st.error(f"❌ Error processing image: {e}")
@@ -619,7 +751,7 @@ st.markdown(
     <style>
     /* Make the "Ask your neuroscience question" label much larger and bolder */
     label[for="user_input"] {
-        font-size: 40px !important;       /* label text size */
+        font-size: 40px !important;
         font-weight: 800 !important;
         color: #ffffff !important;
         margin-bottom: 6px !important;
@@ -664,3 +796,12 @@ if st.session_state.chat_messages and st.session_state.chat_messages[-1]['role']
     st.markdown(f"**NeuroBot:** {st.session_state.chat_messages[-1]['content']}")
 
 # --- Footer ---
+st.markdown("---")
+st.markdown(
+    """
+    <div class="footer">
+    🧠 NeuroScan AI | AI-Powered Brain Tumor Detection | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
