@@ -887,22 +887,109 @@ if uploaded_file is not None:
                 
                 # Dynamic filename with patient info
                 safe_name = st.session_state.patient_data['name'].replace(' ', '_').replace('/', '_')
-                st.download_button(
-                    label="📥 Download Diagnostic Report (PDF)",
-                    data=pdf_report,
-                    file_name=f"neuroscan_report_{st.session_state.patient_data['id']}_{safe_name}.pdf",
-                    mime="application/pdf",
-                )
-            else:
-                st.warning("⚠️ Cannot generate report for unsupported image format.")
+                # After PDF generation, add this BEFORE st.download_button:
+                import re
+                import base64
+                import requests
+
+                def is_valid_email(email):
+                    """Validate email format"""
+                    if email == "Not provided" or not email:
+                        return False
+                    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                    return re.match(pattern, email) is not None
+
+                # In your prediction section (replace lines 634-719):
+                class_names = ['No Tumor', 'Tumor', 'Unsupported Image']
+
+                if predicted_class != 2:
+                    pdf_report = generate_pdf_report(pred, class_names, st.session_state.patient_data, image)
+                    confidence = float(pred[predicted_class] * 100)
+                    
+                    st.markdown(
+                    """
+                    <style>
+                    div[data-testid="stDownloadButton"] > button {
+                        height: 86px !important;
+                        padding: 18px 28px !important;
+                        background: linear-gradient(90deg, #ff416c, #ff4b2b) !important;
+                        color: white !important;
+                        font-weight: 900 !important;
+                        font-size: 100px !important;
+                        border-radius: 14px !important;
+                        width: 630px;
+                        box-shadow: 0 10px 30px rgba(255,65,108,0.35) !important;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.0 !important;
+                    }
+                    div[data-testid="stDownloadButton"] > button:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 16px 40px rgba(255,65,108,0.45) !important;
+                    }
+                    div[data-testid="stDownloadButton"] > button span {
+                        font-size: 50px;
+                        letter-spacing: 0.6px !important;
+                        font-weight: 900 !important;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                    )
+                    
+                    # n8n Webhook URL - UPDATE THIS WITH YOUR ACTUAL N8N URL
+                    N8N_WEBHOOK_URL = "https://ajaymud.app.n8n.cloud/webhook-test/neuroscan-report"
+                    
+                    # Check if patient provided a valid email
+                    patient_email = st.session_state.patient_data['email']
+                    email_provided = is_valid_email(patient_email)
+                    
+                    if email_provided:
+                        # Convert PDF to base64 for n8n
+                        pdf_base64 = base64.b64encode(pdf_report.getvalue()).decode()
+                        
+                        # Prepare data for n8n
+                        n8n_data = {
+                            "patient_name": st.session_state.patient_data['name'],
+                            "patient_email": patient_email,
+                            "patient_id": st.session_state.patient_data['id'],
+                            "prediction": class_names[predicted_class],
+                            "confidence": f"{confidence:.2f}%",
+                            "report_pdf": pdf_base64, 
+                            "report_date": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                        
+                        # Send to n8n asynchronously
+                        try:
+                            response = requests.post(N8N_WEBHOOK_URL, json=n8n_data, timeout=10)
+                            if response.status_code == 200:
+                                st.success(f"📧 Report sent to {patient_email}")
+                            else:
+                                st.warning(f"📧 Email sending failed (Status: {response.status_code}). Download manually below.")
+                        except Exception as e:
+                            st.info(f"📧 Email sending failed - download manually below. Error: {str(e)}")
+                    else:
+                        st.info("📧 No valid email provided - download report manually")
+                    
+                    # Download button
+                    safe_name = st.session_state.patient_data['name'].replace(' ', '_').replace('/', '_')
+                    st.download_button(
+                        label="📥 Download Diagnostic PDF Report",
+                        data=pdf_report,
+                        file_name=f"neuroscan_report_{st.session_state.patient_data['id']}_{safe_name}.pdf",
+                        mime="application/pdf",
+                    )
+                else:
+                    st.warning("⚠️ Cannot generate report for unsupported image format.")
 
         except Exception as e:
             st.error(f"❌ Error processing image: {e}")
-else:
-    st.info("📌 Please upload an MRI scan image to start the prediction.")
+        else:
+            st.info("📌 Please upload an MRI scan image to start the prediction.")
 
 
-st.markdown("---")
+            st.markdown("---")
 
 # --- Chatbot UI ---
 user_query = st.text_input("Ask Questions to NeuroBot:", key="user_input")
