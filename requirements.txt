@@ -8,3 +8,4 @@ streamlit-lottie
 requests
 plotly
 reportlab
+google-generativeai
