@@ -246,7 +246,7 @@ def login_ui():
             unsafe_allow_html=True,
         )
         username = st.text_input(
-            "", key="username", placeholder="AjayMudliyar", label_visibility="collapsed"
+            "", key="username", placeholder="Enter the Username", label_visibility="collapsed"
         )
 
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
@@ -330,7 +330,7 @@ def login_ui():
         submitted = st.form_submit_button("Sign In")
 
         st.markdown(
-            '<div class="ns-small">Use <strong>AjayMudliyar</strong> / <strong>Neuro@123</strong> for demo access</div>',
+            '<div class="ns-small">Use <strong>GreyMatterX</strong> / <strong>Neuro@123</strong> for demo access</div>',
             unsafe_allow_html=True,
         )
 
@@ -340,7 +340,7 @@ def login_ui():
                 st.markdown("</div></div>", unsafe_allow_html=True)
                 return False
 
-            if username == "AjayMudliyar" and password == "Neuro@123":
+            if username == "GreyMatterX" and password == "Neuro@123":
                 st.session_state.logged_in = True
                 st.success("✅ Login successful — redirecting...")
                 st.markdown("</div></div>", unsafe_allow_html=True)
