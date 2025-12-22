@@ -895,7 +895,7 @@ if uploaded_file is not None:
                 )
                 
                 # n8n Webhook URL - UPDATE THIS WITH YOUR ACTUAL N8N URL
-                N8N_WEBHOOK_URL = "https://ajaymud.app.n8n.cloud/webhook-test/neuroscan-report"
+                N8N_WEBHOOK_URL = "https://ajaymud.app.n8n.cloud/webhook/neuroscan-report"
                 
                 # Check if patient provided a valid email
                 patient_email = st.session_state.patient_data['email']
