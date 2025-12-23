@@ -1,4 +1,4 @@
-🧠🧠 NeuroScan AI is an AI-powered clinical workflow that detects brain tumors from MRI scans in 2-3 seconds using a CNN model with 94% accuracy across 3 classes (No Tumor, Tumor Detected, Unsupported Image).​
+🧠🧠 NeuroScan AI is an AI-powered clinical workflow that detects brain tumors from MRI scans in 2-3 seconds using a CNN model with 88.11% accuracy across 3 classes (No Tumor, Tumor Detected, Unsupported Image).​
 
 Complete hospital-ready system:
 
@@ -120,7 +120,6 @@ _Unlike basic models, NeuroScan handles the FULL clinical journey_
 | Component | Link |
 | --- | --- |
 | [Live MVP](https://neuroscann-ai.streamlit.app/) | 🧠 Full workflow |
-| [Demo Video (3min)](https://youtube.com/your-video) | 📹 Complete demo |
 | [GitHub Repo](https://github.com/AjayMudliyar/neuroscan-ai) | 💻 Source code |
 
 Try it: Upload any MRI → Watch AI work → Chat with NeuroBot!
